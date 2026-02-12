@@ -101,6 +101,21 @@ If you want to ship immediately for BIL testing:
 ### Reality check before public sharing
 - Current app is still MVP-grade for private testing; for public use, complete auth + DB + real OAuth cut-line items below.
 
+
+### Vercel 404 troubleshooting (`404: NOT_FOUND`)
+If Vercel shows a 404 page like `Code: NOT_FOUND`, it usually means the project was deployed from repo root without frontend build/output mapping.
+
+This repo now includes **root** `vercel.json` for monorepo deploys:
+- install: `cd frontend && npm install`
+- build: `cd frontend && npm run build`
+- output: `frontend/dist`
+- SPA rewrite: all routes -> `/index.html`
+
+After adding this:
+1. Redeploy from Vercel (root of repo is fine).
+2. Confirm framework preset can be "Other" (config is explicit).
+3. Ensure `VITE_API_URL` is set in Vercel env if backend mode is used.
+
 ## Practical production-grade MVP cut line
 Use this as the go-live checklist for two real users (you + BIL):
 
