@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: gameday_dadvisor
+      POSTGRES_PASSWORD: gameday_dadvisor
+      POSTGRES_DB: gameday_dadvisor
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      FERNET_KEY: ${FERNET_KEY}
+      SEATGEEK_CLIENT_ID: ${SEATGEEK_CLIENT_ID:-}
+      SEATGEEK_CLIENT_SECRET: ${SEATGEEK_CLIENT_SECRET:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      SEARCH_RATE_LIMIT_PER_MINUTE: ${SEARCH_RATE_LIMIT_PER_MINUTE:-30}
+      GAMES_CACHE_TTL_SECONDS: ${GAMES_CACHE_TTL_SECONDS:-900}
+      TICKETS_CACHE_TTL_SECONDS: ${TICKETS_CACHE_TTL_SECONDS:-900}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

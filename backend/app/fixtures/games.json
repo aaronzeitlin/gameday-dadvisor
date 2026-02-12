@@ -1,0 +1,75 @@
+{
+  "games": [
+    {
+      "game_id": "g1",
+      "league": "MLB",
+      "team": "Yankees",
+      "opponent": "Red Sox",
+      "start_time_utc": "2026-05-20T23:05:00+00:00",
+      "end_time_utc": "2026-05-21T02:30:00+00:00",
+      "venue": "Yankee Stadium",
+      "venue_zip": "10451",
+      "lat": 40.8296,
+      "lon": -73.9262,
+      "giveaway_text": "Aaron Judge bobblehead night",
+      "ticket_url": "https://seatgeek.com/yankees-vs-redsox-tickets"
+    },
+    {
+      "game_id": "g2",
+      "league": "MLB",
+      "team": "Yankees",
+      "opponent": "Blue Jays",
+      "start_time_utc": "2026-06-02T23:05:00+00:00",
+      "end_time_utc": "2026-06-03T02:20:00+00:00",
+      "venue": "Yankee Stadium",
+      "venue_zip": "10451",
+      "lat": 40.8296,
+      "lon": -73.9262,
+      "giveaway_text": null,
+      "ticket_url": "https://seatgeek.com/yankees-vs-bluejays-tickets"
+    },
+    {
+      "game_id": "g3",
+      "league": "NBA",
+      "team": "Knicks",
+      "opponent": "Celtics",
+      "start_time_utc": "2026-05-25T23:30:00+00:00",
+      "end_time_utc": "2026-05-26T01:45:00+00:00",
+      "venue": "Madison Square Garden",
+      "venue_zip": "10001",
+      "lat": 40.7505,
+      "lon": -73.9934,
+      "giveaway_text": "Playoff rally towel",
+      "ticket_url": "https://seatgeek.com/knicks-vs-celtics-tickets"
+    }
+  ],
+  "tickets": [
+    {
+      "game_id": "g1",
+      "min_price": 55,
+      "median_price": 89,
+      "availability_count": 210,
+      "estimated_total": 222.5,
+      "best_value_score": 0.82,
+      "deep_link": "https://seatgeek.com/yankees-vs-redsox-tickets"
+    },
+    {
+      "game_id": "g2",
+      "min_price": 30,
+      "median_price": 48,
+      "availability_count": 300,
+      "estimated_total": 120,
+      "best_value_score": 0.9,
+      "deep_link": "https://seatgeek.com/yankees-vs-bluejays-tickets"
+    },
+    {
+      "game_id": "g3",
+      "min_price": 95,
+      "median_price": 140,
+      "availability_count": 120,
+      "estimated_total": 350,
+      "best_value_score": 0.62,
+      "deep_link": "https://seatgeek.com/knicks-vs-celtics-tickets"
+    }
+  ]
+}
