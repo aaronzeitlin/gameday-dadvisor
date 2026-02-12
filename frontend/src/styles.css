@@ -1,0 +1,12 @@
+body { font-family: Arial, sans-serif; margin: 0; background: #f5f7fa; }
+.container { max-width: 980px; margin: auto; padding: 1rem; }
+nav { display: flex; gap: 1rem; margin-bottom: 1rem; }
+section { background: white; padding: 1rem; border-radius: 8px; }
+label { display: block; margin: 0.5rem 0; }
+.row { display: flex; gap: 0.5rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+.card { border: 1px solid #ddd; border-radius: 8px; padding: 0.75rem; }
+.modal { background: #0b132b; color: #fff; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ddd; padding: 0.4rem; }
+button { margin-right: 0.5rem; }
