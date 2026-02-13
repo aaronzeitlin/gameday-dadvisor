@@ -6,19 +6,21 @@ const STORAGE_KEYS = {
 
 const toasts = []
 const listeners = new Set()
+let cachedSnapshot = null
 
 const normalizeEmail = (email = '') => email.trim().toLowerCase()
 
-const emit = () => {
-  listeners.forEach(listener => listener())
-}
-
-const getStored = () => ({
+const createSnapshot = () => ({
   signedInEmail: localStorage.getItem(STORAGE_KEYS.email) || '',
   userId: localStorage.getItem(STORAGE_KEYS.userId) || '',
   currentPlanId: localStorage.getItem(STORAGE_KEYS.planId) || '',
   toasts: [...toasts]
 })
+
+const emit = () => {
+  cachedSnapshot = createSnapshot()
+  listeners.forEach(listener => listener())
+}
 
 export const uiState = {
   subscribe(listener) {
@@ -26,7 +28,10 @@ export const uiState = {
     return () => listeners.delete(listener)
   },
   snapshot() {
-    return getStored()
+    if (!cachedSnapshot) {
+      cachedSnapshot = createSnapshot()
+    }
+    return cachedSnapshot
   },
   setSignedInEmail(email) {
     const normalized = normalizeEmail(email)
