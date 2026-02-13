@@ -1,199 +1,131 @@
-import { useEffect, useState } from 'react'
-import { api, getPlanId, setPlanId, getUserId, getUserEmail, setUserEmail } from '../api/client'
+import { useEffect, useMemo, useState } from 'react'
+import { api } from '../api/client'
+import { uiState } from '../ui-state'
 
+type Participant = { user_id: string; connected_accounts: number; ready?: boolean }
 type PlanResp = {
   plan: { id: string; name: string; participant_user_ids: string[] }
-  participants: { user_id: string; connected_accounts: number }[]
+  participants: Participant[]
   share_url: string
 }
 
-type Readiness = {
-  plan_id: string
-  all_ready: boolean
-  participants: { user_id: string; connected_accounts: number; ready: boolean }[]
-}
-
 export default function PlanPage() {
-  const [name, setName] = useState('Brother-in-law Baseball Plan')
-  const [joinId, setJoinId] = useState('')
-  const [emailInput, setEmailInput] = useState(getUserEmail())
+  const [email, setEmail] = useState(uiState.snapshot().signedInEmail)
+  const [planName, setPlanName] = useState('Brother-in-law Baseball Plan')
+  const [joinId, setJoinId] = useState(uiState.parseJoinPlanFromUrl() || '')
   const [plan, setPlan] = useState<PlanResp | null>(null)
-  const [readiness, setReadiness] = useState<Readiness | null>(null)
-  const [message, setMessage] = useState('')
-  const [pendingJoinPlan, setPendingJoinPlan] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email.trim())
-  const [loadingAction, setLoadingAction] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
+  const isValidEmail = /\S+@\S+\.\S+/
 
-  const refreshReadiness = async (id: string, showSuccessMessage = false) => {
-    try {
-      const r = await api<Readiness>(`/plans/${id}/readiness`)
-      setReadiness(r)
-      if (showSuccessMessage) {
-        setMessage('Readiness refreshed.')
-      }
-    } catch {
-      setErrorMessage('We could not refresh readiness right now. Please try again.')
-    }
+  const loadPlan = async (planId: string) => {
+    const payload = await api<PlanResp>(`/plans/${planId}`)
+    setPlan(payload)
+    uiState.setPlanId(payload.plan.id)
   }
 
-  const create = async () => {
-    setLoadingAction('create')
-    setErrorMessage('')
+  const createPlan = async () => {
+    setLoading(true)
+    setError('')
     try {
-      const p = await api<PlanResp>('/plans', 'POST', { name })
-      setPlan(p)
-      setPlanId(p.plan.id)
-      await refreshReadiness(p.plan.id)
-      setMessage('Plan created. Share the join link with the second person.')
+      const payload = await api<PlanResp>('/plans', 'POST', { name: planName })
+      setPlan(payload)
+      uiState.setPlanId(payload.plan.id)
+      setJoinId(payload.plan.id)
+      uiState.addToast('Plan created. Share the invite link.')
     } catch {
-      setErrorMessage('We could not create your plan right now. Please try again.')
+      setError('Could not create plan. Please try again.')
     } finally {
-      setLoadingAction('')
+      setLoading(false)
     }
   }
 
-  const join = async (id?: string) => {
-    const target = (id || joinId).trim()
-    if (!target) return
-    const p = await api<PlanResp>(`/plans/${target}/join`, 'POST')
-    const joiningUser = getUserId()
-    setPlan(p)
-    setPlanId(p.plan.id)
-    setPendingJoinPlan(null)
-    setMessage(`Invite accepted. ${joiningUser} joined plan ${p.plan.id}.`)
-    await refreshReadiness(p.plan.id)
-    setLoadingAction('join')
-    setErrorMessage('')
-    try {
-      const p = await api<PlanResp>(`/plans/${target}/join`, 'POST')
-      setPlan(p)
-      setPlanId(p.plan.id)
-      await refreshReadiness(p.plan.id)
-      setMessage('Plan joined successfully. You are now in the shared plan.')
-    } catch {
-      setErrorMessage('We could not join that plan. Check the plan ID and try again.')
-    } finally {
-      setLoadingAction('')
-    }
-  }
-
-  const loadCurrent = async () => {
-    const id = getPlanId()
+  const joinPlan = async (id = joinId) => {
     if (!id) return
-    setLoadingAction('loadCurrent')
-    setErrorMessage('')
+    setLoading(true)
+    setError('')
     try {
-      const p = await api<PlanResp>(`/plans/${id}`)
-      setPlan(p)
-      await refreshReadiness(id)
-      setMessage('Loaded your current plan.')
+      const payload = await api<PlanResp>(`/plans/${id}/join`, 'POST')
+      setPlan(payload)
+      uiState.setPlanId(payload.plan.id)
+      uiState.addToast(`Joined ${payload.plan.name}`)
     } catch {
-      setErrorMessage('We could not load your current plan right now. Please try again.')
+      setError('Plan ID not found or invite expired.')
     } finally {
-      setLoadingAction('')
-    }
-  }
-
-  const handleRefreshReadiness = async () => {
-    const id = plan?.plan.id || getPlanId()
-    if (!id) return
-    setLoadingAction('refreshReadiness')
-    setErrorMessage('')
-    try {
-      await refreshReadiness(id, true)
-    } finally {
-      setLoadingAction('')
+      setLoading(false)
     }
   }
 
   const saveIdentity = async () => {
-    const normalized = emailInput.trim().toLowerCase()
-    if (!isValidEmail(normalized)) return
-    setUserEmail(normalized)
-
-    if (pendingJoinPlan) {
-      await join(pendingJoinPlan)
+    if (!isValidEmail.test(email.trim().toLowerCase())) {
+      setError('Enter a valid email to continue.')
       return
     }
-
-    setMessage(`Signed in as ${normalized}.`)
+    uiState.setSignedInEmail(email)
+    uiState.addToast(`Signed in as ${email.trim().toLowerCase()}`)
+    if (joinId) await joinPlan(joinId)
   }
 
-  const shareLink = plan ? `${window.location.origin}/plan?joinPlan=${plan.plan.id}` : ''
-  const isLoading = Boolean(loadingAction)
-
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const shared = params.get('joinPlan')
-    if (shared) {
-      setJoinId(shared)
-      const email = getUserEmail()
-      if (isValidEmail(email)) {
-        join(shared)
-      } else {
-        setPendingJoinPlan(shared)
-      }
-    }
+    const planId = uiState.snapshot().currentPlanId
+    if (planId) loadPlan(planId).catch(() => undefined)
+    if (joinId && uiState.snapshot().signedInEmail) joinPlan(joinId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const shareLink = plan ? `${window.location.origin}/plan?joinPlan=${plan.plan.id}` : ''
+  const checklist = useMemo(() => uiState.readinessChecklist(plan?.participants || []), [plan])
+
   return (
-    <section>
-      <h2>Shared Plan</h2>
-      <p><strong>Step 1:</strong> sign in with your email. The app uses this email as your account identity.</p>
-      <div className="row">
-        <input
-          type="email"
-          placeholder="you@example.com"
-          value={emailInput}
-          onChange={e => setEmailInput(e.target.value)}
-          disabled={isLoading}
-        />
-        <button onClick={saveIdentity} disabled={isLoading}>Save Email Identity</button>
-      </div>
-      {pendingJoinPlan && <p className="status warning">Save your email identity before joining this plan.</p>}
-      <p className="meta">Current account: <code className="inline-code">{getUserId()}</code></p>
-
-      <p><strong>Step 2:</strong> create a plan and share it.</p>
-      <div className="row">
-        <input value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
-        <button onClick={create} disabled={isLoading}>Create New Plan</button>
+    <section className="panel stack">
+      <div>
+        <h2>Plan Setup</h2>
+        <p className="muted">Sign in with email, create a plan, and share a join link.</p>
       </div>
 
-      <p><strong>Step 3:</strong> invitee opens the link (or pastes Plan ID) to accept and join.</p>
-      <div className="row">
-        <input placeholder="Paste plan id" value={joinId} onChange={e => setJoinId(e.target.value)} disabled={isLoading} />
-        <button className="secondary" onClick={() => join()} disabled={isLoading}>Accept / Join Plan</button>
-        <button className="secondary" onClick={loadCurrent} disabled={isLoading}>Load My Current Plan</button>
-        <button className="secondary" onClick={handleRefreshReadiness} disabled={isLoading || !plan}>Refresh Readiness</button>
+      <div className="grid-2">
+        <article className="card stack">
+          <h3>1) Identity</h3>
+          <input type="email" placeholder="alice@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+          <button className="btn btn-primary" onClick={saveIdentity} disabled={loading}>Save Email Identity</button>
+          <p className="muted">Email is your account identity. Backend also maps it to X-User-Id.</p>
+        </article>
+
+        <article className="card stack">
+          <h3>2) Create or Join</h3>
+          <input value={planName} onChange={e => setPlanName(e.target.value)} aria-label="Plan name" />
+          <button className="btn btn-primary" onClick={createPlan} disabled={loading}>Create Plan</button>
+          <input placeholder="Paste Plan ID" value={joinId} onChange={e => setJoinId(e.target.value)} />
+          <button className="btn btn-secondary" onClick={() => joinPlan()} disabled={loading}>Join Plan</button>
+        </article>
       </div>
 
-      {message && <p className="status info">{message}</p>}
-      {errorMessage && <p className="status error">{errorMessage}</p>}
+      {error && <p className="inline-error">{error}</p>}
 
-      {plan && (
-        <div>
-          <h3>{plan.plan.name}</h3>
-          <p>Plan ID: <code className="inline-code">{plan.plan.id}</code></p>
-          <p>Share link: <code className="inline-code">{shareLink}</code></p>
-          <h4>Participants</h4>
-          <ul className="list">
-            {plan.participants.map(p => <li key={p.user_id}>{p.user_id} ({p.connected_accounts} connected calendar provider(s))</li>)}
-          </ul>
+      <article className="card stack">
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0 }}>3) Participants & readiness</h3>
+          {shareLink && <button className="btn btn-secondary" onClick={() => uiState.copyText(shareLink).then(() => uiState.addToast('Invite link copied'))}>Copy invite link</button>}
         </div>
-      )}
-
-      {readiness && (
-        <div>
-          <h4>Readiness</h4>
-          <p className="meta">{readiness.all_ready ? '✅ All participants connected at least one calendar.' : '⚠️ Some participants still need to connect a calendar.'}</p>
-          <ul className="list">
-            {readiness.participants.map(p => <li key={p.user_id}>{p.user_id}: {p.ready ? 'ready' : 'not ready'}</li>)}
-          </ul>
-        </div>
-      )}
+        {!plan && <p className="muted">No plan yet. Create one to start shared planning.</p>}
+        {plan && (
+          <>
+            <p className="muted"><strong>{plan.plan.name}</strong> · Plan ID: {plan.plan.id}</p>
+            <div className="stack">
+              {plan.participants.map(person => (
+                <div key={person.user_id} className="row" style={{ justifyContent: 'space-between' }}>
+                  <span>{person.user_id}</span>
+                  <span className={`pill ${person.connected_accounts > 0 ? 'success' : 'warning'}`}>
+                    {person.connected_accounts > 0 ? 'Connected' : 'Missing calendar'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="muted">Checklist: {checklist.connected}/{checklist.total} participants connected calendars.</p>
+          </>
+        )}
+      </article>
     </section>
   )
 }
