@@ -92,6 +92,7 @@ export default function PreferencesPage() {
   const teamsForLeague = LEAGUE_TEAMS[league]
 
   const ranked: SearchResult[] = useMemo(() => data?.ranked ?? [], [data])
+  const noMatches = Boolean(data) && ranked.length === 0
   const groupedByWeekday = useMemo(() => {
     return ranked.reduce<Record<string, SearchResult[]>>((acc, result) => {
       const key = weekdayName(result.game.start_time_utc)
@@ -154,61 +155,75 @@ export default function PreferencesPage() {
 
       {data && (
         <>
-          <div className="row view-toggle">
-            <strong>Result View:</strong>
-            <button className={viewMode === 'cards' ? '' : 'secondary'} onClick={() => setViewMode('cards')}>Card List</button>
-            <button className={viewMode === 'week' ? '' : 'secondary'} onClick={() => setViewMode('week')}>Weekly</button>
-            <button className={viewMode === 'calendar' ? '' : 'secondary'} onClick={() => setViewMode('calendar')}>Calendar</button>
-          </div>
-
-          {viewMode === 'cards' && (
-            <div className="cards">
-              {ranked.map(r => (
-                <article key={r.game.game_id} className="card">
-                  <h4>{r.game.team} vs {r.game.opponent}</h4>
-                  <p>{new Date(r.game.start_time_utc).toLocaleString()}</p>
-                  <p>Score: {r.score.toFixed(2)}</p>
-                  <p>Estimated total: ${r.ticket_summary.estimated_total}</p>
-                  <p>{r.game.giveaway_text || 'No giveaway listed'}</p>
-                  <ul className="list">{r.why_recommended.map(w => <li key={w}>{w}</li>)}</ul>
-                  <a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">View tickets</a>
-                </article>
-              ))}
+          {noMatches ? (
+            <div className="status info" role="status" aria-live="polite">
+              <strong>No matching games found for current filters.</strong>
+              <ul className="list">
+                <li>Expand your date range.</li>
+                <li>Increase your budget total.</li>
+                <li>Disable giveaway-only filtering.</li>
+                <li>Verify all participants connected their calendars.</li>
+              </ul>
             </div>
-          )}
+          ) : (
+            <>
+              <div className="row view-toggle">
+                <strong>Result View:</strong>
+                <button className={viewMode === 'cards' ? '' : 'secondary'} onClick={() => setViewMode('cards')}>Card List</button>
+                <button className={viewMode === 'week' ? '' : 'secondary'} onClick={() => setViewMode('week')}>Weekly</button>
+                <button className={viewMode === 'calendar' ? '' : 'secondary'} onClick={() => setViewMode('calendar')}>Calendar</button>
+              </div>
 
-          {viewMode === 'week' && (
-            <div className="week-grid">
-              {Object.entries(groupedByWeekday).map(([day, games]) => (
-                <article key={day} className="card">
-                  <h4>{day}</h4>
-                  <ul className="list">
-                    {games.map(game => (
-                      <li key={game.game.game_id}>
-                        {dayLabel(game.game.start_time_utc)} · {game.game.team} vs {game.game.opponent} (${game.ticket_summary.estimated_total})
-                      </li>
+              {viewMode === 'cards' && (
+                <div className="cards">
+                  {ranked.map(r => (
+                    <article key={r.game.game_id} className="card">
+                      <h4>{r.game.team} vs {r.game.opponent}</h4>
+                      <p>{new Date(r.game.start_time_utc).toLocaleString()}</p>
+                      <p>Score: {r.score.toFixed(2)}</p>
+                      <p>Estimated total: ${r.ticket_summary.estimated_total}</p>
+                      <p>{r.game.giveaway_text || 'No giveaway listed'}</p>
+                      <ul className="list">{r.why_recommended.map(w => <li key={w}>{w}</li>)}</ul>
+                      <a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">View tickets</a>
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              {viewMode === 'week' && (
+                <div className="week-grid">
+                  {Object.entries(groupedByWeekday).map(([day, games]) => (
+                    <article key={day} className="card">
+                      <h4>{day}</h4>
+                      <ul className="list">
+                        {games.map(game => (
+                          <li key={game.game.game_id}>
+                            {dayLabel(game.game.start_time_utc)} · {game.game.team} vs {game.game.opponent} (${game.ticket_summary.estimated_total})
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              {viewMode === 'calendar' && (
+                <table>
+                  <thead><tr><th>Date</th><th>Matchup</th><th>Score</th><th>Price</th><th>Link</th></tr></thead>
+                  <tbody>
+                    {ranked.map(r => (
+                      <tr key={r.game.game_id}>
+                        <td>{new Date(r.game.start_time_utc).toLocaleDateString()}</td>
+                        <td>{r.game.team} vs {r.game.opponent}</td>
+                        <td>{r.score.toFixed(2)}</td>
+                        <td>${r.ticket_summary.estimated_total}</td>
+                        <td><a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">Tickets</a></td>
+                      </tr>
                     ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {viewMode === 'calendar' && (
-            <table>
-              <thead><tr><th>Date</th><th>Matchup</th><th>Score</th><th>Price</th><th>Link</th></tr></thead>
-              <tbody>
-                {ranked.map(r => (
-                  <tr key={r.game.game_id}>
-                    <td>{new Date(r.game.start_time_utc).toLocaleDateString()}</td>
-                    <td>{r.game.team} vs {r.game.opponent}</td>
-                    <td>{r.score.toFixed(2)}</td>
-                    <td>${r.ticket_summary.estimated_total}</td>
-                    <td><a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">Tickets</a></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </tbody>
+                </table>
+              )}
+            </>
           )}
         </>
       )}
