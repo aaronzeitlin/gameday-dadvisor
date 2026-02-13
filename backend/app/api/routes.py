@@ -45,6 +45,8 @@ async def auth_callback(
     account_email: str = "demo@example.com",
     x_user_id: str | None = Header(default=None),
 ):
+    if provider not in {"google", "microsoft"}:
+        raise HTTPException(status_code=404, detail="unknown provider")
     user_id = current_user_id(x_user_id)
     if not settings.fernet_key:
         raise HTTPException(status_code=500, detail="FERNET_KEY required")
