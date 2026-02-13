@@ -20,6 +20,9 @@ export default function PlanPage() {
   const [plan, setPlan] = useState<PlanResp | null>(null)
   const [readiness, setReadiness] = useState<Readiness | null>(null)
   const [message, setMessage] = useState('')
+  const [pendingJoinPlan, setPendingJoinPlan] = useState<string | null>(null)
+
+  const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email.trim())
   const [loadingAction, setLoadingAction] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -54,6 +57,13 @@ export default function PlanPage() {
   const join = async (id?: string) => {
     const target = (id || joinId).trim()
     if (!target) return
+    const p = await api<PlanResp>(`/plans/${target}/join`, 'POST')
+    const joiningUser = getUserId()
+    setPlan(p)
+    setPlanId(p.plan.id)
+    setPendingJoinPlan(null)
+    setMessage(`Invite accepted. ${joiningUser} joined plan ${p.plan.id}.`)
+    await refreshReadiness(p.plan.id)
     setLoadingAction('join')
     setErrorMessage('')
     try {
@@ -98,10 +108,17 @@ export default function PlanPage() {
     }
   }
 
-  const saveIdentity = () => {
-    if (!emailInput.trim()) return
-    setUserEmail(emailInput)
-    setMessage(`Signed in as ${emailInput.trim().toLowerCase()}.`)
+  const saveIdentity = async () => {
+    const normalized = emailInput.trim().toLowerCase()
+    if (!isValidEmail(normalized)) return
+    setUserEmail(normalized)
+
+    if (pendingJoinPlan) {
+      await join(pendingJoinPlan)
+      return
+    }
+
+    setMessage(`Signed in as ${normalized}.`)
   }
 
   const shareLink = plan ? `${window.location.origin}/plan?joinPlan=${plan.plan.id}` : ''
@@ -112,7 +129,12 @@ export default function PlanPage() {
     const shared = params.get('joinPlan')
     if (shared) {
       setJoinId(shared)
-      join(shared)
+      const email = getUserEmail()
+      if (isValidEmail(email)) {
+        join(shared)
+      } else {
+        setPendingJoinPlan(shared)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -131,6 +153,7 @@ export default function PlanPage() {
         />
         <button onClick={saveIdentity} disabled={isLoading}>Save Email Identity</button>
       </div>
+      {pendingJoinPlan && <p className="status warning">Save your email identity before joining this plan.</p>}
       <p className="meta">Current account: <code className="inline-code">{getUserId()}</code></p>
 
       <p><strong>Step 2:</strong> create a plan and share it.</p>
