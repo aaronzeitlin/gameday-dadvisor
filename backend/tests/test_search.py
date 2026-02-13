@@ -69,3 +69,10 @@ def test_search_rate_limit_enforced():
         client.post('/search', json={'preferences': pref.model_dump(mode='json')}, headers={'X-User-Id': 'ratelimit-user'})
     last = client.post('/search', json={'preferences': pref.model_dump(mode='json')}, headers={'X-User-Id': 'ratelimit-user'})
     assert last.status_code in {200, 429}
+
+
+def test_auth_callback_rejects_unknown_provider():
+    client = TestClient(app)
+    resp = client.post('/auth/github/callback')
+    assert resp.status_code == 404
+    assert resp.json() == {'detail': 'unknown provider'}

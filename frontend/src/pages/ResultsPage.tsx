@@ -24,7 +24,7 @@ export default function ResultsPage() {
       <p className="meta">Current shared plan: <code className="inline-code">{getPlanId() || 'none'}</code></p>
       <p className="meta">Tip: if you run shared search and get an error, make sure each participant connected at least one calendar in Connect Calendars.</p>
       <div className="row">
-        <button onClick={run}>Run Search</button>
+        <button onClick={run}>Generate Results</button>
         <button className="secondary" onClick={() => setShowExplain(!showExplain)}>Explain scoring</button>
       </div>
       {error && <p className="status error">{error}</p>}

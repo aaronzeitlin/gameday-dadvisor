@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, getPlanId } from '../api/client'
 
 const now = new Date()
 const plus90 = new Date(now.getTime() + 90 * 24 * 3600 * 1000)
-
-type ViewMode = 'cards' | 'week' | 'calendar'
 
 const LEAGUE_TEAMS: Record<string, string[]> = {
   MLB: ['Seattle Mariners', 'New York Yankees', 'Los Angeles Dodgers', 'Chicago Cubs', 'Houston Astros'],
@@ -22,17 +21,8 @@ const inferLeague = (teamText?: string | null) => {
   return foundLeague?.[0] ?? DEFAULT_LEAGUE
 }
 
-const weekdayName = (isoTime: string) => new Date(isoTime).toLocaleDateString(undefined, { weekday: 'long' })
-const dayLabel = (isoTime: string) => new Date(isoTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-
-type SearchResult = {
-  score: number
-  game: { game_id: string; team: string; opponent: string; start_time_utc: string; giveaway_text?: string }
-  ticket_summary: { estimated_total: number; deep_link: string }
-  why_recommended: string[]
-}
-
 export default function PreferencesPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     team_text: DEFAULT_TEAM,
     date_start: now.toISOString(),
@@ -51,11 +41,8 @@ export default function PreferencesPage() {
     exclude_back_to_back_late_nights: false
   })
   const [league, setLeague] = useState(DEFAULT_LEAGUE)
-  const [data, setData] = useState<any | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   useEffect(() => {
     api<any>('/preferences').then(p => {
@@ -68,24 +55,26 @@ export default function PreferencesPage() {
 
   const save = async () => {
     setSaving(true)
+    setError('')
     try {
       await api('/preferences', 'PUT', { preferences: form })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Saving preferences failed')
     } finally {
       setSaving(false)
     }
   }
 
-  const saveAndRun = async () => {
+  const saveAndContinue = async () => {
+    setSaving(true)
+    setError('')
     try {
-      setLoading(true)
-      setError('')
       await api('/preferences', 'PUT', { preferences: form })
-      const results = await api<any>('/search', 'POST', { preferences: form, plan_id: getPlanId() })
-      setData(results)
+      navigate('/results')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Search failed')
+      setError(e instanceof Error ? e.message : 'Saving preferences failed')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -103,8 +92,8 @@ export default function PreferencesPage() {
 
   return (
     <section>
-      <h2>Plan + Results</h2>
-      <p className="meta">Pick your filters, then generate game options instantly below in your preferred layout.</p>
+      <h2>Preferences</h2>
+      <p className="meta">Pick your filters, then continue to Results to run and review recommendations.</p>
       <p className="meta">Current shared plan: <code className="inline-code">{getPlanId() || 'none'}</code></p>
 
       <div className="prefs-grid">
@@ -140,15 +129,15 @@ export default function PreferencesPage() {
         <label>Party Size <input type="number" value={form.party_size} onChange={e => setForm({ ...form, party_size: Number(e.target.value) })} /></label>
         <label>Budget Total <input type="number" value={form.budget_total} onChange={e => setForm({ ...form, budget_total: Number(e.target.value) })} /></label>
         <label>
-          Price Tier ({form.price_tier.toFixed(1)})
+          Price Tier
           <input type="range" min={0} max={1} step={0.1} value={form.price_tier} onChange={e => setForm({ ...form, price_tier: Number(e.target.value) })} />
         </label>
         <label><input type="checkbox" checked={form.giveaway_only} onChange={e => setForm({ ...form, giveaway_only: e.target.checked })} />Giveaway Only</label>
       </div>
 
       <div className="row">
-        <button className="secondary" onClick={save} disabled={saving || loading}>{saving ? 'Saving...' : 'Save Preferences'}</button>
-        <button onClick={saveAndRun} disabled={loading}>{loading ? 'Generating...' : 'Generate Results'}</button>
+        <button className="secondary" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Preferences'}</button>
+        <button onClick={saveAndContinue} disabled={saving}>{saving ? 'Saving...' : 'Continue to Results'}</button>
       </div>
 
       {error && <p className="status error">{error}</p>}
