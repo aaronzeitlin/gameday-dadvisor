@@ -7,7 +7,10 @@ import PlanPage from './pages/PlanPage'
 export default function App() {
   return (
     <div className="container">
-      <h1>Gameday Dadvisor</h1>
+      <header className="app-header">
+        <h1>Gameday Dadvisor</h1>
+        <p className="subtitle">Simple planning for shared game nights.</p>
+      </header>
       <nav>
         <Link to="/plan">Plan</Link>
         <Link to="/">Connect Calendars</Link>
