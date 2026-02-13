@@ -9,7 +9,7 @@ from app.models.schemas import (
 from app.services.store import store
 from app.services.scoring import is_available, score_game, WEIGHTS
 from app.providers.calendar import MockCalendarProvider
-from app.providers.tickets import MockProvider, SeatGeekProvider
+from app.providers.tickets import ESPNProvider, SeatGeekProvider
 from app.core.config import settings
 from app.services.security import TokenCipher
 from app.services.cache import TTLCache
@@ -29,7 +29,7 @@ def current_user_id(x_user_id: str | None) -> str:
 def get_ticket_provider():
     if settings.seargeek_client_id and settings.seargeek_client_secret:
         return SeatGeekProvider(settings.seargeek_client_id, settings.seargeek_client_secret)
-    return MockProvider()
+    return ESPNProvider()
 
 
 @router.post("/auth/{provider}/start")
@@ -144,7 +144,7 @@ async def plan_readiness(plan_id: str):
 async def ready():
     checks = {
         "fernet_key_configured": bool(settings.fernet_key),
-        "ticket_provider": "seatgeek" if (settings.seargeek_client_id and settings.seargeek_client_secret) else "mock",
+        "ticket_provider": "seatgeek" if (settings.seargeek_client_id and settings.seargeek_client_secret) else "espn",
     }
     return {"ok": checks["fernet_key_configured"], "checks": checks}
 

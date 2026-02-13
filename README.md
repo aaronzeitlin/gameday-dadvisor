@@ -30,7 +30,7 @@ Their busy slots are defined in `backend/app/fixtures/freebusy.json`.
 - Frontend: React + Vite + TypeScript
 - DB: Postgres (docker-compose; backend currently uses in-memory persistence for MVP)
 - Calendar: provider abstraction + mock free/busy implementation
-- Tickets: SeatGeek provider (if env vars available) or JSON-seeded MockProvider
+- Schedules/Tickets: ESPN public scoreboard feed for supported teams by default; SeatGeek provider when credentials are configured
 
 ## Local setup
 1. Copy env:
