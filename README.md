@@ -9,17 +9,17 @@ Gameday Dadvisor helps users connect calendars, set game ticket preferences, and
 4. Each participant connects calendar providers on **Connect Calendars**.
 5. Run search on **Results** to see games where all plan participants are available.
 
-> Current MVP stores user identity via `X-User-Id` header (frontend auto-generates a local user id).
+> Current MVP stores user identity via `X-User-Id` header and now uses normalized email as the default local identity to emulate SSO/account matching.
 
 ## Two-person usability (MVP)
 This build now supports a practical two-person flow end-to-end:
-- each person sets their own local user id on **Plan** page,
+- each person signs in with their own email on **Plan** page (used as account identity),
 - one person creates a plan and shares `/plan?joinPlan=<id>`,
 - second person opens link and auto-joins,
 - each person connects at least one calendar account,
 - shared search only returns games where all participants are free.
 
-For mock calendar behavior, use these sample emails on Connect Calendars:
+For mock calendar behavior, use these sample emails on Connect Calendars (these also become account identities):
 - `alice@example.com`
 - `bob@example.com`
 
