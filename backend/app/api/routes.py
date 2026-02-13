@@ -101,7 +101,7 @@ async def create_plan(payload: PlanCreateRequest, x_user_id: str | None = Header
 @router.post("/plans/{plan_id}/join", response_model=PlanResponse)
 async def join_plan(plan_id: str, x_user_id: str | None = Header(default=None)):
     user_id = current_user_id(x_user_id)
-    if plan_id not in store.plans:
+    if not store.plan_exists(plan_id):
         raise HTTPException(status_code=404, detail="plan not found")
     store.join_plan(plan_id, user_id)
     plan = store.get_plan(plan_id)
@@ -115,7 +115,7 @@ async def join_plan(plan_id: str, x_user_id: str | None = Header(default=None)):
 
 @router.get("/plans/{plan_id}", response_model=PlanResponse)
 async def get_plan(plan_id: str):
-    if plan_id not in store.plans:
+    if not store.plan_exists(plan_id):
         raise HTTPException(status_code=404, detail="plan not found")
     plan = store.get_plan(plan_id)
     participants = [
@@ -127,7 +127,7 @@ async def get_plan(plan_id: str):
 
 @router.get("/plans/{plan_id}/readiness")
 async def plan_readiness(plan_id: str):
-    if plan_id not in store.plans:
+    if not store.plan_exists(plan_id):
         raise HTTPException(status_code=404, detail="plan not found")
     plan = store.get_plan(plan_id)
     participants = []
@@ -159,7 +159,7 @@ async def search(payload: SearchRequest, x_user_id: str | None = Header(default=
 
     participant_ids = ["demo-user"]
     if payload.plan_id:
-        if payload.plan_id not in store.plans:
+        if not store.plan_exists(payload.plan_id):
             raise HTTPException(status_code=404, detail="plan not found")
         participant_ids = store.get_plan(payload.plan_id).participant_user_ids
 
