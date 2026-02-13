@@ -23,20 +23,20 @@ export default function ConnectPage() {
   return (
     <section>
       <p>Connect Google and/or Microsoft for free/busy availability checks.</p>
-      <p>User: <code>{getUserId()}</code> | Plan: <code>{getPlanId() || 'none'}</code></p>
+      <p className="meta">User: <code className="inline-code">{getUserId()}</code> | Plan: <code className="inline-code">{getPlanId() || 'none'}</code></p>
       <label>Calendar email for this user (MVP mock free/busy fixture)
         <input value={email} onChange={e => setEmail(e.target.value)} />
       </label>
       <div className="row">
         <button onClick={() => connect('google')}>Connect Google</button>
-        <button onClick={() => connect('microsoft')}>Connect Microsoft</button>
+        <button className="secondary" onClick={() => connect('microsoft')}>Connect Microsoft</button>
       </div>
       <h3>Connected accounts</h3>
-      <ul>
+      <ul className="list">
         {accounts.map(a => (
           <li key={a.provider + a.account_email}>
             {a.provider}: {a.account_email}
-            <button onClick={() => disconnect(a.provider)}>Disconnect</button>
+            <button className="secondary" onClick={() => disconnect(a.provider)}>Disconnect</button>
           </li>
         ))}
       </ul>

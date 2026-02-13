@@ -20,11 +20,13 @@ export default function ResultsPage() {
   return (
     <section>
       <h2>Results</h2>
-      <p>Current shared plan: {getPlanId() || 'none'}</p>
-      <p>Tip: if you run shared search and get an error, make sure each participant connected at least one calendar in Connect Calendars.</p>
-      <button onClick={run}>Run Search</button>
-      <button onClick={() => setShowExplain(!showExplain)}>Explain scoring</button>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
+      <p className="meta">Current shared plan: <code className="inline-code">{getPlanId() || 'none'}</code></p>
+      <p className="meta">Tip: if you run shared search and get an error, make sure each participant connected at least one calendar in Connect Calendars.</p>
+      <div className="row">
+        <button onClick={run}>Run Search</button>
+        <button className="secondary" onClick={() => setShowExplain(!showExplain)}>Explain scoring</button>
+      </div>
+      {error && <p className="status error">{error}</p>}
       {showExplain && data && (
         <div className="modal">
           {Object.entries(data.scoring_weights).map(([k, v]) => <p key={k}>{k}: {String(v)}</p>)}
@@ -38,8 +40,8 @@ export default function ResultsPage() {
             <p>{new Date(r.game.start_time_utc).toLocaleString()}</p>
             <p>Estimated total: ${r.ticket_summary.estimated_total}</p>
             <p>{r.game.giveaway_text || 'No giveaway listed'}</p>
-            <ul>{r.why_recommended.map((w: string) => <li key={w}>{w}</li>)}</ul>
-            <a href={r.ticket_summary.deep_link} target="_blank">View tickets</a>
+            <ul className="list">{r.why_recommended.map((w: string) => <li key={w}>{w}</li>)}</ul>
+            <a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">View tickets</a>
           </article>
         ))}
       </div>
@@ -52,7 +54,7 @@ export default function ResultsPage() {
               <td>{r.game.team} vs {r.game.opponent}</td>
               <td>{r.score}</td>
               <td>${r.ticket_summary.estimated_total}</td>
-              <td><a href={r.ticket_summary.deep_link} target="_blank">Tickets</a></td>
+              <td><a href={r.ticket_summary.deep_link} target="_blank" rel="noreferrer">Tickets</a></td>
             </tr>
           ))}
         </tbody>

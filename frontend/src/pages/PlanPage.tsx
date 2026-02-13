@@ -73,12 +73,12 @@ export default function PlanPage() {
   return (
     <section>
       <h2>Shared Plan</h2>
-      <p><strong>Step 1:</strong> set your user identity (example: <code>alex</code>, <code>brian</code>) so each person has their own profile.</p>
+      <p><strong>Step 1:</strong> set your user identity (example: <code className="inline-code">alex</code>, <code className="inline-code">brian</code>) so each person has their own profile.</p>
       <div className="row">
         <input value={userIdInput} onChange={e => setUserIdInput(e.target.value)} />
         <button onClick={switchUser}>Switch User</button>
       </div>
-      <p>Current user id: <code>{getUserId()}</code></p>
+      <p className="meta">Current user id: <code className="inline-code">{getUserId()}</code></p>
 
       <p><strong>Step 2:</strong> create a plan and share it.</p>
       <div className="row">
@@ -89,19 +89,19 @@ export default function PlanPage() {
       <p><strong>Step 3:</strong> second person opens link or joins with Plan ID.</p>
       <div className="row">
         <input placeholder="Paste plan id" value={joinId} onChange={e => setJoinId(e.target.value)} />
-        <button onClick={() => join()}>Join Plan</button>
-        <button onClick={loadCurrent}>Load My Current Plan</button>
+        <button className="secondary" onClick={() => join()}>Join Plan</button>
+        <button className="secondary" onClick={loadCurrent}>Load My Current Plan</button>
       </div>
 
-      {message && <p>{message}</p>}
+      {message && <p className="status info">{message}</p>}
 
       {plan && (
         <div>
           <h3>{plan.plan.name}</h3>
-          <p>Plan ID: <code>{plan.plan.id}</code></p>
-          <p>Share link: <code>{shareLink}</code></p>
+          <p>Plan ID: <code className="inline-code">{plan.plan.id}</code></p>
+          <p>Share link: <code className="inline-code">{shareLink}</code></p>
           <h4>Participants</h4>
-          <ul>
+          <ul className="list">
             {plan.participants.map(p => <li key={p.user_id}>{p.user_id} ({p.connected_accounts} connected calendar provider(s))</li>)}
           </ul>
         </div>
@@ -110,8 +110,8 @@ export default function PlanPage() {
       {readiness && (
         <div>
           <h4>Readiness</h4>
-          <p>{readiness.all_ready ? '✅ All participants connected at least one calendar.' : '⚠️ Some participants still need to connect a calendar.'}</p>
-          <ul>
+          <p className="meta">{readiness.all_ready ? '✅ All participants connected at least one calendar.' : '⚠️ Some participants still need to connect a calendar.'}</p>
+          <ul className="list">
             {readiness.participants.map(p => <li key={p.user_id}>{p.user_id}: {p.ready ? 'ready' : 'not ready'}</li>)}
           </ul>
         </div>
