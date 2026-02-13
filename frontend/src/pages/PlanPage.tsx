@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, getPlanId, setPlanId, getUserId, setUserId } from '../api/client'
+import { api, getPlanId, setPlanId, getUserId, getUserEmail, setUserEmail } from '../api/client'
 
 type PlanResp = {
   plan: { id: string; name: string; participant_user_ids: string[] }
@@ -16,7 +16,7 @@ type Readiness = {
 export default function PlanPage() {
   const [name, setName] = useState('Brother-in-law Baseball Plan')
   const [joinId, setJoinId] = useState('')
-  const [userIdInput, setUserIdInput] = useState(getUserId())
+  const [emailInput, setEmailInput] = useState(getUserEmail())
   const [plan, setPlan] = useState<PlanResp | null>(null)
   const [readiness, setReadiness] = useState<Readiness | null>(null)
   const [message, setMessage] = useState('')
@@ -25,7 +25,7 @@ export default function PlanPage() {
     const p = await api<PlanResp>('/plans', 'POST', { name })
     setPlan(p)
     setPlanId(p.plan.id)
-    setMessage('Plan created. Share the link with your second person.')
+    setMessage('Plan created. Share the join link with the second person.')
     await refreshReadiness(p.plan.id)
   }
 
@@ -35,7 +35,7 @@ export default function PlanPage() {
     const p = await api<PlanResp>(`/plans/${target}/join`, 'POST')
     setPlan(p)
     setPlanId(p.plan.id)
-    setMessage('Joined plan successfully.')
+    setMessage('Invite accepted. You joined the shared plan.')
     await refreshReadiness(p.plan.id)
   }
 
@@ -52,10 +52,10 @@ export default function PlanPage() {
     setReadiness(r)
   }
 
-  const switchUser = () => {
-    if (!userIdInput.trim()) return
-    setUserId(userIdInput.trim())
-    setMessage(`Switched local identity to ${userIdInput.trim()}.`)
+  const saveIdentity = () => {
+    if (!emailInput.trim()) return
+    setUserEmail(emailInput)
+    setMessage(`Signed in as ${emailInput.trim().toLowerCase()}.`)
   }
 
   const shareLink = plan ? `${window.location.origin}/plan?joinPlan=${plan.plan.id}` : ''
@@ -73,12 +73,17 @@ export default function PlanPage() {
   return (
     <section>
       <h2>Shared Plan</h2>
-      <p><strong>Step 1:</strong> set your user identity (example: <code className="inline-code">alex</code>, <code className="inline-code">brian</code>) so each person has their own profile.</p>
+      <p><strong>Step 1:</strong> sign in with your email. The app uses this email as your account identity.</p>
       <div className="row">
-        <input value={userIdInput} onChange={e => setUserIdInput(e.target.value)} />
-        <button onClick={switchUser}>Switch User</button>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={emailInput}
+          onChange={e => setEmailInput(e.target.value)}
+        />
+        <button onClick={saveIdentity}>Save Email Identity</button>
       </div>
-      <p className="meta">Current user id: <code className="inline-code">{getUserId()}</code></p>
+      <p className="meta">Current account: <code className="inline-code">{getUserId()}</code></p>
 
       <p><strong>Step 2:</strong> create a plan and share it.</p>
       <div className="row">
@@ -86,10 +91,10 @@ export default function PlanPage() {
         <button onClick={create}>Create New Plan</button>
       </div>
 
-      <p><strong>Step 3:</strong> second person opens link or joins with Plan ID.</p>
+      <p><strong>Step 3:</strong> invitee opens the link (or pastes Plan ID) to accept and join.</p>
       <div className="row">
         <input placeholder="Paste plan id" value={joinId} onChange={e => setJoinId(e.target.value)} />
-        <button className="secondary" onClick={() => join()}>Join Plan</button>
+        <button className="secondary" onClick={() => join()}>Accept / Join Plan</button>
         <button className="secondary" onClick={loadCurrent}>Load My Current Plan</button>
       </div>
 

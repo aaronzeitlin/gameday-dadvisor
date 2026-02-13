@@ -9,7 +9,7 @@ export default function App() {
     <div className="container">
       <header className="app-header">
         <h1>Gameday Dadvisor</h1>
-        <p className="subtitle">Simple planning for shared game nights.</p>
+        <p className="subtitle">Email-based shared planning for game nights.</p>
       </header>
       <nav>
         <Link to="/plan">Plan</Link>
